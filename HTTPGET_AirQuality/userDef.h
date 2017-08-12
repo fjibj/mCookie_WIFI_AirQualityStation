@@ -1,14 +1,12 @@
 //---------------------------------------
-#define SSID        F("ziroom-2601")
-#define PASSWORD    F("4001001111")
-//#define SSID        F("Makermodule")
-//#define PASSWORD    F("microduino")
+#define SSID        F("Makermodule")
+#define PASSWORD    F("microduino")
 // What page to grab!
 #define HOST_PORT   (80)
 #define WEBSITE      F("api.waqi.info")
 
 static const byte  GETDATA[]  PROGMEM = {
-  "GET /feed/beijing/?token=571402e73270dc01fbd8e423c0567dd790ed53fb HTTP/1.0\r\nHost: api.waqi.info\r\nConnection: close\r\n\r\n"
+  "GET /feed/beijing/?token=demo HTTP/1.0\r\nHost: api.waqi.info\r\nConnection: close\r\n\r\n"
 };
 //从这申请你自己的token: http://aqicn.org/data-platform/token/#/ 替换上面的"demo"字段
 
