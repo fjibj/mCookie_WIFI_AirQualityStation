@@ -47,6 +47,16 @@ boolean networkSta = false;
 boolean dataSta = false;
 
 void setup(void) {
+  u8g.firstPage();
+  do {
+    u8g.setFont(u8g_font_timB10);
+
+    u8g.setPrintPos(0, 16);
+    u8g.print(F("Hello!"));
+    u8g.setPrintPos(0, 32);
+    u8g.print(F("AirQuality Station!"));
+  } while ( u8g.nextPage() );
+
   Serial.begin(115200);
   //while (!Serial); // wait for Leonardo enumeration, others continue immediately
   Serial.print(F("setup begin\r\n"));
@@ -58,7 +68,10 @@ void setup(void) {
     Serial.print(F("to station + softap ok\r\n"));
   } else {
     Serial.print(F("to station + softap err\r\n"));
+    return;
   }
+
+  Serial.println(wifi.getAPList().c_str());
 
   if (wifi.joinAP(SSID, PASSWORD)) {
     Serial.print(F("Join AP success\r\n"));
@@ -67,6 +80,7 @@ void setup(void) {
     Serial.println( wifi.getLocalIP().c_str());
   } else {
     Serial.print(F("Join AP failure\r\n"));
+    return;
   }
 
   if (wifi.disableMUX()) {
@@ -74,6 +88,7 @@ void setup(void) {
   } else {
     Serial.print(F("single err\r\n"));
   }
+
 
   msgInit(&EspSerial);  //初始化数据处理端口
 
@@ -94,8 +109,15 @@ void loop(void) {
   //delay(500);
   wifi.sendFromFlash(GETDATA, sizeof(GETDATA));
 
-  String buffer = "{\"";
-  dataSta = recvStringAt("iaqi", "}}}", buffer, 15000, false);
+
+  String buffer;
+  if (available("+IPD", ":", 10000)) {
+    Serial.print(F("available Data"));
+    Serial.print(F("\r\n"));
+
+    buffer = "{\"";
+    dataSta = recvStringAt("iaqi", "}}}", buffer, 10000, BUFFER_CLR);
+  }
 
   if (wifi.releaseTCP()) {
     Serial.print(F("release tcp ok\r\n"));
@@ -103,13 +125,17 @@ void loop(void) {
     Serial.print(F("release tcp err\r\n"));
   }
 
+  Serial.print(F("RAM buffer:"));
+  Serial.print(buffer);
+  Serial.print(F("\r\n"));
+
   //----------------------------------
   freeRam();
 
   //----------------------------------
   if (dataSta) {
     for (int a = 0; a < MSGNUM; a++) {
-      Data[a] = recvFindAndFilter(string_target, String(string_head[a]) + string_data, string_body, buffer).toFloat();
+      Data[a] = findAndFilter(string_target, String(string_head[a]) + string_data, string_body, buffer, 16).toFloat();
       Serial.print(F("["));
       Serial.print(string_head[a]);
       Serial.print(F(":"));
@@ -118,9 +144,10 @@ void loop(void) {
     }
     Serial.print(F("\r\n"));
 
-    recvFindAndFilter(string_target, string_time, "\"", buffer, 24).toCharArray(updataDate, 20);
+    //.toCharArray(updataDate, 20);
     Serial.print(F("updataDate:"));
-    Serial.print(updataDate);
+    //Serial.print(updataDate);
+    Serial.print(findAndFilter(string_target, "\"time\":{\"s\":\"", "\"", buffer, 24));
     Serial.print(F("\r\n"));
   }
   else {
