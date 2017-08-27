@@ -12,11 +12,6 @@
 #include "msgComputer.h"
 
 //--------------------------------------------
-#include <U8glib.h>
-
-U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE);
-
-//--------------------------------------------
 #include <ESP8266.h>
 
 /**
@@ -47,16 +42,6 @@ boolean networkSta = false;
 boolean dataSta = false;
 
 void setup(void) {
-  u8g.firstPage();
-  do {
-    u8g.setFont(u8g_font_timB10);
-
-    u8g.setPrintPos(0, 16);
-    u8g.print(F("Hello!"));
-    u8g.setPrintPos(0, 32);
-    u8g.print(F("AirQuality Station!"));
-  } while ( u8g.nextPage() );
-
   Serial.begin(115200);
   //while (!Serial); // wait for Leonardo enumeration, others continue immediately
   Serial.print(F("setup begin\r\n"));
@@ -68,10 +53,7 @@ void setup(void) {
     Serial.print(F("to station + softap ok\r\n"));
   } else {
     Serial.print(F("to station + softap err\r\n"));
-    return;
   }
-
-  Serial.println(wifi.getAPList().c_str());
 
   if (wifi.joinAP(SSID, PASSWORD)) {
     Serial.print(F("Join AP success\r\n"));
@@ -80,7 +62,6 @@ void setup(void) {
     Serial.println( wifi.getLocalIP().c_str());
   } else {
     Serial.print(F("Join AP failure\r\n"));
-    return;
   }
 
   if (wifi.disableMUX()) {
@@ -88,7 +69,6 @@ void setup(void) {
   } else {
     Serial.print(F("single err\r\n"));
   }
-
 
   msgInit(&EspSerial);  //初始化数据处理端口
 
@@ -144,38 +124,14 @@ void loop(void) {
     }
     Serial.print(F("\r\n"));
 
-    //.toCharArray(updataDate, 20);
+    findAndFilter(string_target, string_time, "\"", buffer, 24).toCharArray(updataDate, 20);
     Serial.print(F("updataDate:"));
-    //Serial.print(updataDate);
-    Serial.print(findAndFilter(string_target, "\"time\":{\"s\":\"", "\"", buffer, 24));
+    Serial.print(updataDate);
     Serial.print(F("\r\n"));
   }
   else {
     Serial.print(F("data error\r\n"));
   }
-
-  //----------------------------------
-  u8g.firstPage();
-  do {
-    u8g.setFont(u8g_font_timB10);
-
-    u8g.setPrintPos(0, 16);
-    u8g.print(F("PM25: "));
-    u8g.print(Data[7], 0);
-    u8g.setPrintPos(0, 32);
-    u8g.print(F("PM10: "));
-    u8g.print(Data[6], 0);
-
-    u8g.setPrintPos(80, 16);
-    u8g.print(Data[9], 1);
-    u8g.print(F("`C"));
-    u8g.setPrintPos(80, 32);
-    u8g.print(Data[2], 1);
-    u8g.print(F("%"));
-
-    u8g.setPrintPos(0, 64);
-    u8g.print(updataDate);
-  } while ( u8g.nextPage() );
 
   delay(1000);
 }
